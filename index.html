@@ -7,7 +7,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body {
-      background: #f3f4f6;
+      background: #f4f5f7;
       color: #1f2937;
       height: 100vh;
       overflow: hidden;
@@ -18,15 +18,14 @@
       padding: 20px;
     }
 
-    /* ปุ่มสลับ Plant Cell / Animal Cell ด้านบน */
     .top-bar {
       z-index: 10;
       display: flex;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.92);
       padding: 6px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
       border: 1px solid #e5e7eb;
     }
     .mode-btn {
@@ -34,7 +33,7 @@
       background: transparent;
       color: #4b5563;
       padding: 7px 14px;
-      border-radius: 7px;
+      border-radius: 8px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -45,43 +44,41 @@
       color: #ffffff;
     }
 
-    /* กล่องข้อมูลออร์แกเนลล์มุมซ้ายบน */
     .info-card {
       position: fixed;
       top: 72px;
       left: 20px;
-      width: 260px;
+      width: 255px;
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(8px);
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 14px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
       z-index: 10;
     }
-    .info-card h2 { font-size: 16px; color: #111827; margin-bottom: 4px; }
+    .info-card h2 { font-size: 15px; color: #111827; margin-bottom: 4px; }
     .info-card .tag {
       display: inline-block;
       font-size: 11px;
-      background: #eef2ff;
-      color: #4338ca;
+      background: #ecfeff;
+      color: #0e7490;
       padding: 2px 8px;
       border-radius: 999px;
       margin-bottom: 8px;
       font-weight: 600;
     }
-    .info-card p { font-size: 13px; line-height: 1.5; color: #4b5563; }
+    .info-card p { font-size: 12.5px; line-height: 1.5; color: #4b5563; }
 
-    /* แถบ DECONSTRUCT ด้านล่าง */
     .bottom-bar {
       z-index: 10;
       display: flex;
       align-items: center;
       gap: 14px;
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.94);
       padding: 10px 18px;
       border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
       border: 1px solid #e5e7eb;
       font-size: 12px;
       color: #374151;
@@ -146,10 +143,10 @@
 
     const container = document.getElementById('canvas-wrap');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#f3f4f6');
+    scene.background = new THREE.Color('#f4f5f7');
 
-    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 7.5, 9.5);
+    const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 10.5, 6.8);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -160,14 +157,13 @@
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.target.set(0, 0.2, 0);
+    controls.target.set(0, 0, 0);
 
-    // แสงสว่างโทนละมุน
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.35);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.55);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
-    dirLight.position.set(6, 12, 8);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dirLight.position.set(4, 14, 6);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.set(1024, 1024);
     scene.add(dirLight);
@@ -175,8 +171,7 @@
     const cellGroup = new THREE.Group();
     scene.add(cellGroup);
 
-    let boxMesh, wallMesh, parts = [];
-    let currentMode = 'plant';
+    let parts = [];
 
     const plantParts = [
       {
@@ -184,64 +179,98 @@
         type: 'ศูนย์ควบคุมเซลล์',
         desc: 'เก็บสารพันธุกรรม DNA และควบคุมการทำงานต่าง ๆ ภายในเซลล์',
         color: 0x8b5cf6,
-        shape: 'sphere',
-        pos: [-1.45, 0.45, -0.55],
-        scale: [0.85, 0.85, 0.85],
-        explode: [-2.2, 1.5, -0.8]
+        shape: 'dome',
+        pos: [-1.45, 0.25, -0.35],
+        scale: [0.85, 0.42, 0.85],
+        explode: [-2.1, 1.3, -0.6]
       },
       {
         name: 'คลอโรพลาสต์ (Chloroplast)',
         type: 'พบในเซลล์พืช',
         desc: 'มีสารคลอโรฟิลล์สีเขียว ทำหน้าที่สังเคราะห์ด้วยแสงเพื่อสร้างอาหารให้พืช',
         color: 0x22c55e,
-        shape: 'capsule',
-        pos: [0.45, 0.35, -0.9],
-        scale: [0.55, 0.45, 0.85],
-        rot: [0.2, 0.4, 1.2],
-        explode: [1.4, 1.8, -1.7]
+        shape: 'pad',
+        pos: [-0.35, 0.22, -1.1],
+        scale: [0.55, 0.24, 0.95],
+        rot: [0, 0.35, 0],
+        explode: [-0.6, 1.6, -1.9]
       },
       {
-        name: 'คลอโรพลาสต์ 2',
+        name: 'คลอโรพลาสต์ (Chloroplast)',
         type: 'พบในเซลล์พืช',
         desc: 'ช่วยดูดซับพลังงานแสงและเปลี่ยนเป็นพลังงานเคมี',
         color: 0x16a34a,
-        shape: 'capsule',
-        pos: [1.15, 0.35, 0.55],
-        scale: [0.55, 0.45, 0.85],
-        rot: [0.1, -0.5, 1.3],
-        explode: [2.3, 1.4, 1.5]
+        shape: 'pad',
+        pos: [0.45, 0.22, 0.05],
+        scale: [0.58, 0.24, 0.98],
+        rot: [0, 0.5, 0],
+        explode: [0.9, 1.8, 0.2]
+      },
+      {
+        name: 'คลอโรพลาสต์ (Chloroplast)',
+        type: 'พบในเซลล์พืช',
+        desc: 'สร้างน้ำตาลและพลังงานให้เซลล์พืชเจริญเติบโต',
+        color: 0x22c55e,
+        shape: 'pad',
+        pos: [1.35, 0.22, 0.85],
+        scale: [0.55, 0.24, 0.95],
+        rot: [0, 0.85, 0],
+        explode: [2.1, 1.4, 1.5]
+      },
+      {
+        name: 'คลอโรพลาสต์ (Chloroplast)',
+        type: 'พบในเซลล์พืช',
+        desc: 'ออร์แกเนลล์สำคัญที่ทำให้ใบและลำต้นพืชมีสีเขียว',
+        color: 0x4ade80,
+        shape: 'pad',
+        pos: [-1.1, 0.22, 1.25],
+        scale: [0.65, 0.22, 1.05],
+        rot: [0, -0.3, 0],
+        explode: [-1.8, 1.5, 2.0]
       },
       {
         name: 'ไมโทคอนเดรีย (Mitochondria)',
         type: 'แหล่งพลังงานของเซลล์',
         desc: 'เปลี่ยนสารอาหารให้เป็นพลังงาน ATP สำหรับกิจกรรมของเซลล์',
         color: 0xea580c,
-        shape: 'capsule',
-        pos: [-0.25, 0.3, 0.15],
-        scale: [0.48, 0.38, 0.78],
-        rot: [0.3, 0.7, 1.1],
-        explode: [-0.6, 2.2, 0.4]
+        shape: 'pad',
+        pos: [0.55, 0.22, -1.35],
+        scale: [0.45, 0.22, 0.8],
+        rot: [0, 0.2, 0],
+        explode: [1.1, 1.9, -2.1]
+      },
+      {
+        name: 'ไมโทคอนเดรีย (Mitochondria)',
+        type: 'แหล่งพลังงานของเซลล์',
+        desc: 'ช่วยสร้างพลังงานให้เซลล์ทำงานได้อย่างต่อเนื่อง',
+        color: 0xf97316,
+        shape: 'pad',
+        pos: [0.85, 0.22, 1.55],
+        scale: [0.45, 0.22, 0.78],
+        rot: [0, -0.4, 0],
+        explode: [1.5, 1.7, 2.2]
       },
       {
         name: 'แวคิวโอลขนาดใหญ่ (Central Vacuole)',
         type: 'กักเก็บน้ำและสารอาหาร',
         desc: 'ช่วยรักษาความเต่งของเซลล์พืชและเก็บน้ำหรือของเสีย',
-        color: 0x60a5fa,
-        shape: 'box',
-        pos: [-0.2, 0.2, -1.25],
-        scale: [1.1, 0.5, 0.9],
-        explode: [-0.4, 1.6, -2.3]
+        color: 0x93c5fd,
+        shape: 'pad',
+        pos: [-0.25, 0.16, 0.15],
+        scale: [1.35, 0.16, 1.35],
+        rot: [0, 0.2, 0],
+        explode: [-0.4, 1.1, 0.3]
       },
       {
         name: 'กอลจิบอดี (Golgi Apparatus)',
         type: 'คัดแยกและบรรจุสาร',
         desc: 'ปรับแต่ง คัดแยก และบรรจุโปรตีนหรือสารต่าง ๆ ส่งไปยังจุดหมาย',
-        color: 0xf472b6,
-        shape: 'torus',
-        pos: [1.45, 0.35, -1.1],
-        scale: [0.55, 0.55, 0.55],
-        rot: [Math.PI / 2, 0, 0.4],
-        explode: [2.4, 2.0, -1.9]
+        color: 0xf9a8d4,
+        shape: 'pad',
+        pos: [1.55, 0.22, -1.25],
+        scale: [0.6, 0.24, 0.65],
+        rot: [0, 0.4, 0],
+        explode: [2.2, 1.7, -1.9]
       }
     ];
 
@@ -251,100 +280,143 @@
         type: 'ศูนย์ควบคุมเซลล์',
         desc: 'ควบคุมการทำงานของเซลล์และเก็บข้อมูลทางพันธุกรรม',
         color: 0x8b5cf6,
-        shape: 'sphere',
-        pos: [0, 0.5, 0],
-        scale: [0.95, 0.95, 0.95],
-        explode: [0, 2.2, 0]
+        shape: 'dome',
+        pos: [0, 0.25, 0],
+        scale: [0.95, 0.45, 0.95],
+        explode: [0, 1.8, 0]
       },
       {
         name: 'ไมโทคอนเดรีย (Mitochondria)',
         type: 'แหล่งพลังงานของเซลล์',
         desc: 'สร้างพลังงานให้เซลล์สัตว์ทำงานได้อย่างต่อเนื่อง',
         color: 0xea580c,
-        shape: 'capsule',
-        pos: [-1.4, 0.35, 0.8],
-        scale: [0.5, 0.4, 0.85],
-        rot: [0.2, 0.3, 1.2],
-        explode: [-2.3, 1.5, 1.6]
+        shape: 'pad',
+        pos: [-1.35, 0.22, 0.75],
+        scale: [0.5, 0.24, 0.9],
+        rot: [0, 0.4, 0],
+        explode: [-2.1, 1.5, 1.4]
+      },
+      {
+        name: 'ไมโทคอนเดรีย (Mitochondria)',
+        type: 'แหล่งพลังงานของเซลล์',
+        desc: 'ผลิตพลังงานให้เซลล์ในร่างกายพร้อมใช้งาน',
+        color: 0xf97316,
+        shape: 'pad',
+        pos: [1.35, 0.22, -0.75],
+        scale: [0.5, 0.24, 0.9],
+        rot: [0, -0.5, 0],
+        explode: [2.1, 1.5, -1.4]
       },
       {
         name: 'เซนทริโอล (Centriole)',
         type: 'ช่วยในการแบ่งเซลล์',
         desc: 'มีบทบาทสำคัญในการจัดระเบียบเส้นใยสปินเดิลขณะแบ่งเซลล์',
-        color: 0x10b981,
-        shape: 'capsule',
-        pos: [1.35, 0.35, 0.75],
-        scale: [0.42, 0.35, 0.7],
-        rot: [0.4, -0.4, 1.1],
-        explode: [2.2, 1.6, 1.5]
+        color: 0x22c55e,
+        shape: 'pad',
+        pos: [1.25, 0.22, 0.95],
+        scale: [0.48, 0.22, 0.75],
+        rot: [0, 0.8, 0],
+        explode: [1.9, 1.6, 1.7]
       },
       {
         name: 'ไลโซโซม (Lysosome)',
         type: 'ย่อยสลายสิ่งแปลกปลอม',
         desc: 'บรรจุเอนไซม์สำหรับย่อยสลายของเสียหรือชิ้นส่วนที่ไม่ใช้แล้ว',
         color: 0xf59e0b,
-        shape: 'sphere',
-        pos: [1.2, 0.35, -1.0],
-        scale: [0.45, 0.45, 0.45],
-        explode: [2.0, 1.8, -1.8]
+        shape: 'dome',
+        pos: [-1.15, 0.22, -1.05],
+        scale: [0.48, 0.28, 0.48],
+        explode: [-1.8, 1.6, -1.7]
       },
       {
         name: 'กอลจิบอดี (Golgi Apparatus)',
         type: 'คัดแยกและบรรจุสาร',
         desc: 'ลำเลียงและบรรจุสารต่าง ๆ เพื่อส่งออกนอกเซลล์หรือใช้ในเซลล์',
-        color: 0xec4899,
-        shape: 'torus',
-        pos: [-1.25, 0.35, -1.05],
-        scale: [0.55, 0.55, 0.55],
-        rot: [Math.PI / 2, 0, -0.3],
-        explode: [-2.1, 1.8, -1.8]
+        color: 0xf472b6,
+        shape: 'pad',
+        pos: [0.1, 0.22, 1.45],
+        scale: [0.85, 0.22, 0.55],
+        rot: [0, 0.1, 0],
+        explode: [0.2, 1.7, 2.2]
       }
     ];
 
-    function createGeometry(shape) {
-      if (shape === 'sphere') return new THREE.SphereGeometry(0.65, 32, 32);
-      if (shape === 'box') return new THREE.BoxGeometry(1, 0.7, 1);
-      if (shape === 'torus') return new THREE.TorusGeometry(0.55, 0.2, 16, 32);
-      return new THREE.CapsuleGeometry(0.32, 0.55, 12, 24);
+    function createPartGeometry(shape) {
+      if (shape === 'dome') {
+        const g = new THREE.SphereGeometry(0.62, 32, 20, 0, Math.PI * 2, 0, Math.PI * 0.55);
+        return g;
+      }
+      // รูปทรงแผ่นรีแบนมนคล้ายชิ้นส่วนในภาพอ้างอิง
+      const g = new THREE.CylinderGeometry(0.55, 0.62, 0.65, 28);
+      return g;
+    }
+
+    function addDecorDots(parent, isPlant) {
+      const dotGeo = new THREE.SphereGeometry(0.045, 12, 12);
+      const dotMat = new THREE.MeshBasicMaterial({ color: isPlant ? 0xfacc15 : 0x38bdf8 });
+      const coords = [
+        [-0.7, 0.14, -1.65],
+        [1.75, 0.14, 0.15],
+        [-0.15, 0.14, 1.65],
+        [-1.85, 0.14, 0.45],
+        [0.1, 0.14, -0.65]
+      ];
+      coords.forEach(([x, y, z]) => {
+        const d = new THREE.Mesh(dotGeo, dotMat);
+        d.position.set(x, y, z);
+        parent.add(d);
+      });
     }
 
     function buildCell(mode) {
-      currentMode = mode;
       while (cellGroup.children.length > 0) {
         cellGroup.remove(cellGroup.children[0]);
       }
       parts = [];
 
       const isPlant = mode === 'plant';
-      // ฐานกล่องสี่เหลี่ยมสไตล์ไอโซเมตริก
-      const baseGeo = new THREE.BoxGeometry(5.2, isPlant ? 0.55 : 0.38, 5.2);
-      const baseMat = new THREE.MeshStandardMaterial({
-        color: isPlant ? 0xd9f99d : 0xfde68a,
-        roughness: 0.65
-      });
-      boxMesh = new THREE.Mesh(baseGeo, baseMat);
-      boxMesh.position.y = -0.25;
-      boxMesh.receiveShadow = true;
-      cellGroup.add(boxMesh);
 
-      // ผนังขอบกรอบสี่เหลี่ยมโปร่งใส
-      const wallGeo = new THREE.BoxGeometry(5.2, isPlant ? 1.15 : 0.85, 5.2);
-      const wallEdges = new THREE.EdgesGeometry(wallGeo);
-      wallMesh = new THREE.LineSegments(
-        wallEdges,
-        new THREE.LineBasicMaterial({ color: isPlant ? 0x65a30d : 0xd97706 })
+      // ฐานกรอบนอกนุ่ม ๆ
+      const outerGeo = new THREE.BoxGeometry(5.5, 0.32, 4.6);
+      const outerMat = new THREE.MeshStandardMaterial({
+        color: isPlant ? 0xdbe7e4 : 0xf3e8d2,
+        roughness: 0.75
+      });
+      const outerMesh = new THREE.Mesh(outerGeo, outerMat);
+      outerMesh.position.y = -0.18;
+      outerMesh.receiveShadow = true;
+      cellGroup.add(outerMesh);
+
+      // ผิวด้านในโทนฟ้าอมเขียวอ่อน ๆ คล้ายรูปอ้างอิง
+      const innerGeo = new THREE.BoxGeometry(4.95, 0.18, 4.05);
+      const innerMat = new THREE.MeshStandardMaterial({
+        color: isPlant ? 0xb7dcd8 : 0xe8f1f5,
+        roughness: 0.6
+      });
+      const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+      innerMesh.position.y = -0.06;
+      innerMesh.receiveShadow = true;
+      cellGroup.add(innerMesh);
+
+      // เส้นขอบกรอบบาง ๆ
+      const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(5.5, 0.45, 4.6));
+      const line = new THREE.LineSegments(
+        edges,
+        new THREE.LineBasicMaterial({ color: isPlant ? 0x94a3b8 : 0xd97706 })
       );
-      wallMesh.position.y = isPlant ? 0.3 : 0.15;
-      cellGroup.add(wallMesh);
+      line.position.y = -0.1;
+      cellGroup.add(line);
+
+      addDecorDots(cellGroup, isPlant);
 
       const list = isPlant ? plantParts : animalParts;
       list.forEach((item) => {
         const mat = new THREE.MeshStandardMaterial({
           color: item.color,
-          roughness: 0.35,
-          metalness: 0.05
+          roughness: 0.42,
+          metalness: 0.02
         });
-        const mesh = new THREE.Mesh(createGeometry(item.shape), mat);
+        const mesh = new THREE.Mesh(createPartGeometry(item.shape), mat);
         mesh.position.set(...item.pos);
         mesh.scale.set(...item.scale);
         if (item.rot) mesh.rotation.set(...item.rot);
@@ -388,7 +460,6 @@
       buildCell('animal');
     });
 
-    // คลิกเลือกออร์แกเนลล์ในฉาก 3 มิติ
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
     renderer.domElement.addEventListener('click', (e) => {
