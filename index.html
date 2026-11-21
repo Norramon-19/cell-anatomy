@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cell Anatomy — Interactive 3D Cell Explorer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0b1020; color: #f1f5f9; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+    header {
+      padding: 14px 20px; background: rgba(15, 23, 42, 0.9); border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex; justify-content: space-between; align-items: center; z-index: 10;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 700; }
+    header span { font-size: 0.8rem; color: #94a3b8; }
+    .main { flex: 1; display: flex; position: relative; overflow: hidden; }
+    .sidebar {
+      width: 250px; background: rgba(15, 23, 42, 0.85); border-right: 1px solid rgba(148, 163, 184, 0.15);
+      padding: 14px; display: flex; flex-direction: column; gap: 8px; z-index: 10; overflow-y: auto;
+    }
+    .sidebar-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #94a3b8; margin-bottom: 4px; }
+    .org-btn {
+      background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(148, 163, 184, 0.15); color: #e2e8f0;
+      padding: 10px 12px; border-radius: 10px; text-align: left; cursor: pointer; font-size: 0.9rem;
+      display: flex; align-items: center; gap: 8px; transition: 0.2s;
+    }
+    .org-btn:hover { background: rgba(51, 65, 85, 0.95); }
+    .org-btn.active { background: #2563eb; border-color: #60a5fa; color: #fff; font-weight: 600; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    #canvas-wrap { flex: 1; position: relative; cursor: grab; }
+    #canvas-wrap:active { cursor: grabbing; }
+    .explode-bar {
+      position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 10px 18px; border-radius: 999px; display: flex; align-items: center; gap: 12px; z-index: 10;
+    }
+    .explode-bar label { font-size: 0.85rem; color: #cbd5e1; white-space: nowrap; }
+    .explode-bar input { width: 140px; accent-color: #3b82f6; cursor: pointer; }
+    .inspector {
+      width: 290px; background: rgba(15, 23, 42, 0.88); border-left: 1px solid rgba(148, 163, 184, 0.15);
+      padding: 18px; z-index: 10; overflow-y: auto;
+    }
+    .inspector h2 { font-size: 1.15rem; margin-bottom: 6px; }
+    .badge { display: inline-block; font-size: 0.75rem; padding: 3px 9px; border-radius: 999px; background: rgba(59, 130, 246, 0.2); color: #93c5fd; margin-bottom: 12px; }
+    .inspector p { font-size: 0.9rem; line-height: 1.6; color: #cbd5e1; margin-bottom: 14px; }
+    .tip { font-size: 0.78rem; color: #94a3b8; border-top: 1px solid rgba(148, 163, 184, 0.15); padding-top: 12px; line-height: 1.5; }
+    @media (max-width: 820px) {
+      .main { flex-direction: column; }
+      .sidebar { width: 100%; max-height: 130px; flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid rgba(148, 163, 184, 0.15); }
+      .inspector { width: 100%; max-height: 190px; border-left: none; border-top: 1px solid rgba(148, 163, 184, 0.15); }
+      .explode-bar { bottom: 205px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Cell Anatomy — Interactive 3D Cell Explorer</h1>
+      <span>สำรวจโครงสร้างเซลล์แบบ 3 มิติ</span>
+    </div>
+    <span>ลากเพื่อหมุน • เลื่อนล้อเพื่อซูม</span>
+  </header>
+
+  <div class="main">
+    <aside class="sidebar" id="organelle-list">
+      <div class="sidebar-title">Organelles</div>
+    </aside>
+
+    <div id="canvas-wrap">
+      <div class="explode-bar">
+        <label for="explode-range">Exploded View:</label>
+        <input id="explode-range" type="range" min="0" max="100" value="0" />
+        <span id="explode-val">0%</span>
+      </div>
+    </div>
+
+    <aside class="inspector">
+      <div class="badge" id="org-type">โครงสร้างหลัก</div>
+      <h2 id="org-name">นิวเคลียส (Nucleus)</h2>
+      <p id="org-desc">ศูนย์ควบคุมการทำงานของเซลล์ เก็บสารพันธุกรรม (DNA) และควบคุมการเจริญเติบโตและการแบ่งเซลล์</p>
+      <div class="tip">💡 ลองเลื่อนแถบ <strong>Exploded View</strong> ด้านล่างเพื่อแยกออร์แกเนลล์ออกจากกัน หรือกดเลือกชื่อทางซ้ายได้เลย</div>
+    </aside>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    const organellesData = [
+      {
+        id: 'nucleus',
+        name: 'นิวเคลียส (Nucleus)',
+        type: 'ศูนย์ควบคุม',
+        color: '#6366f1',
+        pos: [0, 0.2, 0],
+        explodeDir: [0, 1.4, 0],
+        desc: 'ทำหน้าที่เป็นศูนย์บัญชาการของเซลล์ เก็บรักษาสารพันธุกรรม DNA และควบคุมกระบวนการต่าง ๆ ภายในเซลล์'
+      },
+      {
+        id: 'mitochondria',
+        name: 'ไมโทคอนเดรีย (Mitochondrion)',
+        type: 'แหล่งพลังงาน',
+        color: '#f97316',
+        pos: [1.5, -0.3, 0.8],
+        explodeDir: [1.6, -0.5, 1.1],
+        desc: 'แหล่งสร้างพลังงานหลักของเซลล์ในรูปของ ATP จากการหายใจระดับเซลล์ เปรียบเสมือนโรงไฟฟ้าของเซลล์'
+      },
+      {
+        id: 'golgi',
+        name: 'กอลจิบอดี (Golgi Apparatus)',
+        type: 'คัดแยกและบรรจุ',
+        color: '#eab308',
+        pos: [-1.4, 0.5, 0.9],
+        explodeDir: [-1.6, 0.8, 1.2],
+        desc: 'ทำหน้าที่ปรับแต่ง คัดแยก และบรรจุโปรตีนหรือสารต่าง ๆ เพื่อส่งไปยังตำแหน่งที่เหมาะสมภายในหรือนอกเซลล์'
+      },
+      {
+        id: 'er',
+        name: 'เอนโดพลาสมิกเรติคูลัม (ER)',
+        type: 'สังเคราะห์และลำเลียง',
+        color: '#10b981',
+        pos: [0.2, -1.1, 1.3],
+        explodeDir: [0.3, -1.4, 1.6],
+        desc: 'ระบบท่อและถุงแบนที่เชื่อมต่อกัน ช่วยสังเคราะห์โปรตีนและไขมัน พร้อมลำเลียงสารภายในเซลล์'
+      },
+      {
+        id: 'lysosome',
+        name: 'ไลโซโซม (Lysosome)',
+        type: 'ย่อยสลายของเสีย',
+        color: '#ec4899',
+        pos: [-1.2, -0.8, -1.0],
+        explodeDir: [-1.5, -1.1, -1.3],
+        desc: 'ถุงบรรจุเอนไซม์สำหรับย่อยสลายสิ่งแปลกปลอม เศษเซลล์ที่เสื่อมสภาพ และของเสียภายในเซลล์'
+      }
+    ];
+
+    const container = document.getElementById('canvas-wrap');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 6.8);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 1.1));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    dirLight.position.set(5, 8, 6);
+    scene.add(dirLight);
+
+    // เยื่อหุ้มเซลล์โปร่งแสง
+    const membrane = new THREE.Mesh(
+      new THREE.SphereGeometry(2.7, 40, 40),
+      new THREE.MeshPhysicalMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.14,
+        roughness: 0.15,
+        depthWrite: false
+      })
+    );
+    scene.add(membrane);
+
+    const meshes = [];
+    const listEl = document.getElementById('organelle-list');
+    const nameEl = document.getElementById('org-name');
+    const typeEl = document.getElementById('org-type');
+    const descEl = document.getElementById('org-desc');
+    const rangeEl = document.getElementById('explode-range');
+    const valEl = document.getElementById('explode-val');
+
+    function createOrganelleMesh(item, idx) {
+      let geo;
+      if (idx === 0) geo = new THREE.SphereGeometry(0.75, 32, 32);
+      else if (idx === 1) geo = new THREE.CapsuleGeometry(0.32, 0.7, 12, 20);
+      else if (idx === 2) geo = new THREE.TorusGeometry(0.45, 0.16, 16, 32);
+      else if (idx === 3) geo = new THREE.TorusKnotGeometry(0.36, 0.12, 64, 12);
+      else geo = new THREE.DodecahedronGeometry(0.38, 0);
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: item.color,
+        roughness: 0.35,
+        metalness: 0.1
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(...item.pos);
+      mesh.userData = { item, basePos: new THREE.Vector3(...item.pos), explodeDir: new THREE.Vector3(...item.explodeDir) };
+      scene.add(mesh);
+      meshes.push(mesh);
+      return mesh;
+    }
+
+    function selectOrganelle(item) {
+      nameEl.textContent = item.name;
+      typeEl.textContent = item.type;
+      descEl.textContent = item.desc;
+      document.querySelectorAll('.org-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.id === item.id);
+      });
+    }
+
+    organellesData.forEach((item, idx) => {
+      createOrganelleMesh(item, idx);
+      const btn = document.createElement('button');
+      btn.className = 'org-btn' + (idx === 0 ? ' active' : '');
+      btn.dataset.id = item.id;
+      btn.innerHTML = `<span class="dot" style="background:${item.color}"></span><span>${item.name.split(' (')[0]}</span>`;
+      btn.onclick = () => selectOrganelle(item);
+      listEl.appendChild(btn);
+    });
+
+    // คลิกบนโมเดล 3 มิติได้ด้วย
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    renderer.domElement.addEventListener('click', (e) => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(meshes);
+      if (hits.length > 0) {
+        selectOrganelle(hits[0].object.userData.item);
+      }
+    });
+
+    rangeEl.addEventListener('input', () => {
+      valEl.textContent = `${rangeEl.value}%`;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const factor = Number(rangeEl.value) / 100;
+      meshes.forEach((m, i) => {
+        const target = m.userData.basePos.clone().addScaledVector(m.userData.explodeDir, factor);
+        m.position.lerp(target, 0.12);
+        m.rotation.y += 0.006 + i * 0.001;
+      });
+      membrane.scale.setScalar(1 + factor * 0.25);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
