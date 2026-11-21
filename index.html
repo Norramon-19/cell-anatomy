@@ -1,512 +1,209 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cell Anatomy — Interactive 3D Explorer</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body {
-      background: #eceae4;
-      color: #1f2937;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* แถบด้านบน */
-    header {
-      height: 52px;
-      background: #f4f2ec;
-      border-bottom: 1px solid #dcd8cf;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 18px;
-      z-index: 20;
-    }
-    .brand { display: flex; align-items: center; gap: 10px; }
-    .brand-icon {
-      width: 24px; height: 24px; border-radius: 999px;
-      border: 1.5px solid #6b7280; display: grid; place-items: center;
-      font-size: 11px; color: #374151;
-    }
-    .brand-title { font-size: 13px; font-weight: 700; color: #111827; line-height: 1.1; }
-    .brand-sub { font-size: 10px; color: #6b7280; }
-
-    .top-modes {
-      display: flex; gap: 6px; background: #e6e3da;
-      padding: 3px; border-radius: 8px; border: 1px solid #d6d2c7;
-    }
-    .mode-btn {
-      border: none; background: transparent; color: #4b5563;
-      padding: 5px 12px; border-radius: 6px; font-size: 11.5px; font-weight: 600;
-      cursor: pointer;
-    }
-    .mode-btn.active { background: #ffffff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-
-    .top-actions { display: flex; gap: 6px; }
-    .action-btn {
-      border: 1px solid #d6d2c7; background: #f8f7f3; color: #374151;
-      padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
-      cursor: pointer;
-    }
-    .action-btn:hover { background: #ffffff; }
-
-    /* โครงสร้างหลัก 3 คอลัมน์ */
-    .workspace {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 235px 1fr 245px;
-      min-height: 0;
-    }
-
-    /* คอลัมน์ซ้าย */
-    .left-panel {
-      background: #f2f0ea;
-      border-right: 1px solid #dcd8cf;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 12px;
-      overflow-y: auto;
-    }
-    .section-label {
-      font-size: 9.5px; font-weight: 700; letter-spacing: 0.08em;
-      color: #6b7280; margin-bottom: 8px;
-    }
-    .org-list { display: flex; flex-direction: column; gap: 3px; }
-    .org-item {
-      display: flex; align-items: flex-start; gap: 8px;
-      padding: 6px 8px; border-radius: 7px; cursor: pointer;
-      border: 1px solid transparent; transition: all 0.15s;
-    }
-    .org-item:hover { background: #e8e5dc; }
-    .org-item.active { background: #ffffff; border-color: #cbd5e1; }
-    .org-num { font-size: 10px; color: #9ca3af; font-variant-numeric: tabular-nums; margin-top: 2px; }
-    .org-item-name { font-size: 11.5px; font-weight: 700; color: #1f2937; line-height: 1.25; }
-    .org-item-sub { font-size: 10px; color: #6b7280; line-height: 1.25; }
-
-    .cell-data-box {
-      margin-top: 12px; background: #f8f7f3; border: 1px solid #dcd8cf;
-      border-radius: 8px; padding: 10px; font-size: 10.5px;
-    }
-    .data-row {
-      display: flex; justify-content: space-between; gap: 8px;
-      padding: 4px 0; border-bottom: 1px solid #ece9e0;
-    }
-    .data-row:last-child { border-bottom: none; }
-    .data-k { color: #6b7280; }
-    .data-v { font-weight: 600; color: #1f2937; text-align: right; }
-
-    /* คอลัมน์กลาง */
-    .center-stage {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 14px 18px;
-      background: #e7e9ec;
-    }
-    .stage-top {
-      position: relative; z-index: 10;
-      display: flex; justify-content: space-between; align-items: flex-start;
-    }
-    .stage-title { font-size: 14px; font-weight: 700; color: #111827; }
-    .stage-sub { font-size: 11px; color: #6b7280; }
-
-    .cam-pills {
-      display: flex; gap: 4px; background: rgba(255,255,255,0.75);
-      padding: 3px; border-radius: 7px; border: 1px solid #d1d5db;
-    }
-    .cam-btn {
-      border: none; background: transparent; color: #4b5563;
-      padding: 4px 9px; border-radius: 5px; font-size: 10.5px; font-weight: 600;
-      cursor: pointer;
-    }
-    .cam-btn.active { background: #111827; color: #ffffff; }
-
-    .stage-bottom {
-      position: relative; z-index: 10;
-      display: flex; justify-content: center;
-    }
-    .deconstruct-box {
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(248, 247, 243, 0.92);
-      border: 1px solid #d6d2c7; border-radius: 9px;
-      padding: 7px 14px; font-size: 10.5px;
-    }
-    .deconstruct-label { font-weight: 700; letter-spacing: 0.06em; color: #4b5563; }
-    input[type="range"] { width: 140px; accent-color: #ea580c; cursor: pointer; }
-    .ticks {
-      display: flex; gap: 8px; font-size: 10px; color: #6b7280;
-      font-variant-numeric: tabular-nums; font-weight: 600;
-    }
-
-    #canvas-wrap {
-      position: absolute; inset: 0; z-index: 1;
-    }
-
-    /* คอลัมน์ขวา */
-    .right-panel {
-      background: #f2f0ea;
-      border-left: 1px solid #dcd8cf;
-      padding: 14px;
-      display: flex; flex-direction: column; gap: 12px;
-      overflow-y: auto;
-    }
-    .badge-count { font-size: 10px; font-weight: 700; color: #6b7280; letter-spacing: 0.06em; }
-    .detail-heading { font-size: 18px; font-weight: 700; color: #111827; }
-    .detail-lead { font-size: 12px; line-height: 1.5; color: #374151; }
-    .detail-note {
-      font-size: 11px; line-height: 1.5; color: #6b7280;
-      padding-top: 10px; border-top: 1px solid #dcd8cf;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Cell Anatomy — Interactive 3D Cell Explorer by Tanaporn Taneeprasert M3.1 No18</title>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('cell-anatomy-theme');
+      var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      document.documentElement.setAttribute('data-theme', saved || (prefersLight ? 'light' : 'dark'));
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: dark;
+  --bg-app:#0c1119; --bg-panel:#121826; --bg-panel-2:#161e2e; --bg-raised:#1b2436;
+  --border:#232e42; --border-soft:#1a2334;
+  --text-primary:#eef1f6; --text-secondary:#93a1b7; --text-tertiary:#59667d;
+  --copper:#dd9553; --copper-dim:rgba(221,149,83,0.14); --copper-line:rgba(221,149,83,0.35);
+  --cyan:#5fe1cd; --cyan-dim:rgba(95,225,205,0.14);
+  --overlay-bg:rgba(18,24,38,0.9); --scrollbar-thumb:#2a3448; --hover-border:#3a4763;
+  --font-display:'Space Grotesk', sans-serif; --font-mono:'IBM Plex Mono', monospace;
+}
+[data-theme="light"]{
+  color-scheme: light;
+  --bg-app:#eef1f6; --bg-panel:#ffffff; --bg-panel-2:#f7f9fc; --bg-raised:#eef2f8;
+  --border:#dbe1ea; --border-soft:#e9edf3;
+  --text-primary:#141b26; --text-secondary:#4d5a6e; --text-tertiary:#8592a6;
+  --copper:#b26a25; --copper-dim:rgba(178,106,37,0.10); --copper-line:rgba(178,106,37,0.40);
+  --cyan:#0e9384; --cyan-dim:rgba(14,147,132,0.12);
+  --overlay-bg:rgba(255,255,255,0.94); --scrollbar-thumb:#c9d2de; --hover-border:#b9c4d4;
+}
+*,*::before,*::after{ margin:0; padding:0; box-sizing:border-box; }
+html,body{ height:100%; }
+body{ font-family:var(--font-display); background:var(--bg-app); color:var(--text-primary); overflow:hidden; width:100vw; height:100vh; transition:background-color .22s ease, color .22s ease; }
+::-webkit-scrollbar{ width:6px; height:6px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--scrollbar-thumb); border-radius:4px; }
+#app{ display:grid; grid-template-columns:272px 1fr 320px; grid-template-rows:56px 1fr; height:100vh; width:100vw; background:var(--bg-app); }
+#header{ grid-column:1/4; grid-row:1/2; display:flex; align-items:center; justify-content:space-between; padding:0 18px; background:var(--bg-panel); border-bottom:1px solid var(--border); z-index:20; gap:16px; transition:background-color .22s ease, border-color .22s ease; }
+#brand{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+#brand svg{ display:block; }
+.logo-back{ stroke:var(--text-tertiary); }
+.logo-front{ fill:var(--bg-panel-2); stroke:var(--copper); }
+#brand .name{ font-size:15px; font-weight:600; letter-spacing:-0.01em; white-space:nowrap; }
+#brand .tagline{ font-family:var(--font-mono); font-size:10px; color:var(--text-tertiary); margin-top:1px; white-space:nowrap; }
+#device-tabs{ display:flex; gap:6px; }
+#device-tabs button{ display:flex; align-items:center; gap:7px; background:transparent; border:1px solid var(--border); color:var(--text-secondary); font-family:var(--font-display); font-size:12.5px; font-weight:500; padding:7px 14px; border-radius:7px; cursor:pointer; transition:.15s; white-space:nowrap; }
+#device-tabs button:hover{ border-color:var(--hover-border); color:var(--text-primary); }
+#device-tabs button.active{ background:var(--copper-dim); border-color:var(--copper-line); color:var(--copper); }
+#device-tabs button .dot{ width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.55; }
+#header-actions{ display:flex; gap:8px; flex-shrink:0; align-items:center; }
+#header-actions button{ background:transparent; border:1px solid var(--border); color:var(--text-secondary); font-family:var(--font-mono); font-size:11px; padding:7px 12px; border-radius:7px; cursor:pointer; transition:.15s; }
+#header-actions button:hover{ border-color:var(--hover-border); color:var(--text-primary); }
+#btn-theme{ display:inline-flex; align-items:center; justify-content:center; width:32px; padding:7px 0 !important; }
+#btn-theme .icon-sun{ display:block; } #btn-theme .icon-moon{ display:none; }
+[data-theme="light"] #btn-theme .icon-sun{ display:none; }
+[data-theme="light"] #btn-theme .icon-moon{ display:block; }
+#left-panel{ grid-column:1/2; grid-row:2/3; background:var(--bg-panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.panel-section{ padding:16px 16px 14px; }
+.panel-section + .panel-section{ border-top:1px solid var(--border-soft); }
+.panel-title{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-tertiary); margin-bottom:10px; }
+#layer-list{ list-style:none; overflow-y:auto; flex:1; padding:4px 10px 10px; }
+#layer-list li{ display:flex; align-items:center; gap:10px; padding:8px; border-radius:6px; cursor:pointer; transition:.12s; }
+#layer-list li:hover{ background:var(--bg-raised); }
+#layer-list li.hovered{ background:var(--cyan-dim); }
+#layer-list li.selected{ background:var(--copper-dim); }
+#layer-list .idx{ font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); width:18px; flex-shrink:0; }
+#layer-list li.selected .idx{ color:var(--copper); }
+#layer-list .meta{ min-width:0; flex:1; }
+#layer-list .name{ font-size:12.5px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#layer-list .material{ font-family:var(--font-mono); font-size:10px; color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#spec-sheet{ padding:14px 16px 18px; }
+#spec-sheet .spec-row{ display:flex; justify-content:space-between; gap:10px; font-size:11.5px; padding:6px 0; border-bottom:1px solid var(--border-soft); color:var(--text-secondary); }
+#spec-sheet .spec-row:last-child{ border-bottom:none; }
+#spec-sheet .spec-row span:first-child{ color:var(--text-tertiary); }
+#spec-sheet .spec-row span:last-child{ font-family:var(--font-mono); font-size:11px; color:var(--text-primary); text-align:right; }
+#viewport{ grid-column:2/3; grid-row:2/3; position:relative; background:var(--bg-app); overflow:hidden; }
+#viewport canvas{ display:block; }
+.vp-overlay{ position:absolute; pointer-events:none; }
+#vp-topleft{ top:16px; left:18px; font-family:var(--font-mono); font-size:11px; color:var(--text-tertiary); line-height:1.6; }
+#vp-topleft .device-name{ font-family:var(--font-display); font-size:15px; font-weight:600; color:var(--text-primary); }
+#view-presets{ top:16px; right:18px; display:flex; gap:6px; pointer-events:auto; }
+#view-presets button{ background:var(--overlay-bg); border:1px solid var(--border); color:var(--text-secondary); font-family:var(--font-mono); font-size:10.5px; padding:6px 11px; border-radius:6px; cursor:pointer; backdrop-filter:blur(4px); transition:.15s; }
+#view-presets button:hover{ border-color:var(--hover-border); color:var(--text-primary); }
+#decon-wrap{ bottom:22px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:12px; background:var(--overlay-bg); border:1px solid var(--border); border-radius:10px; padding:10px 18px; backdrop-filter:blur(6px); pointer-events:auto; min-width:380px; }
+#decon-wrap label{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+#decon-slider{ flex:1; accent-color:var(--copper); cursor:pointer; }
+#decon-value{ font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--copper); width:38px; text-align:right; }
+.decon-chips{ display:flex; gap:4px; }
+.decon-chips button{ background:transparent; border:1px solid var(--border); color:var(--text-tertiary); font-family:var(--font-mono); font-size:10px; padding:3px 8px; border-radius:5px; cursor:pointer; transition:.15s; }
+.decon-chips button:hover{ border-color:var(--copper-line); color:var(--copper); }
+#hover-tip{ position:fixed; pointer-events:none; background:var(--overlay-bg); border:1px solid var(--border); color:var(--text-primary); font-family:var(--font-mono); font-size:11px; padding:5px 10px; border-radius:6px; display:none; z-index:50; backdrop-filter:blur(4px); }
+#right-panel{ grid-column:3/4; grid-row:2/3; background:var(--bg-panel); border-left:1px solid var(--border); padding:18px 18px 20px; overflow-y:auto; }
+#inspector-eyebrow{ font-family:var(--font-mono); font-size:10.5px; color:var(--copper); letter-spacing:.06em; margin-bottom:8px; min-height:14px; }
+#inspector-name{ font-size:20px; font-weight:600; letter-spacing:-0.01em; margin-bottom:10px; line-height:1.25; }
+#inspector-material{ display:inline-block; font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); background:var(--bg-raised); border:1px solid var(--border); padding:4px 10px; border-radius:20px; margin-bottom:14px; }
+#inspector-desc{ font-size:13.5px; line-height:1.65; color:var(--text-secondary); }
+#inspector-hint{ margin-top:18px; padding-top:16px; border-top:1px solid var(--border-soft); font-family:var(--font-mono); font-size:10.5px; color:var(--text-tertiary); line-height:1.7; }
+@media (max-width:980px){ #app{ grid-template-columns:220px 1fr 260px; } #decon-wrap{ min-width:260px; } }
+@media (max-width:760px){
+  #app{ grid-template-columns:1fr; grid-template-rows:56px 1fr auto; }
+  #left-panel{ display:none; }
+  #viewport{ grid-column:1/2; grid-row:2/3; }
+  #right-panel{ grid-column:1/2; grid-row:3/4; border-left:none; border-top:1px solid var(--border); max-height:34vh; }
+  #device-tabs button span.label{ display:none; }
+  #decon-wrap{ min-width:0; width:calc(100% - 32px); }
+}
+</style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="brand-icon">◎</div>
+<div id="app">
+  <header id="header">
+    <div id="brand">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+        <circle class="logo-back" cx="13" cy="13" r="10" stroke-width="1.4" fill="none"/>
+        <circle class="logo-front" cx="13" cy="13" r="4.5" stroke-width="1.4"/>
+        <circle cx="19" cy="8" r="1.6" fill="#3fa63f"/>
+        <circle cx="7" cy="18" r="1.6" fill="#c4543d"/>
+      </svg>
       <div>
-        <div class="brand-title">Cell Anatomy</div>
-        <div class="brand-sub">Interactive 3D cell explorer</div>
+        <div class="name">Cell Anatomy</div>
+        <div class="tagline">interactive 3d cell explorer</div>
       </div>
     </div>
-
-    <div class="top-modes">
-      <button id="btn-plant" class="mode-btn active">• Plant Cell</button>
-      <button id="btn-animal" class="mode-btn">• Animal Cell</button>
-    </div>
-
-    <div class="top-actions">
-      <button id="btn-spin" class="action-btn">↻ Auto</button>
-      <button id="btn-reset" class="action-btn">Reset</button>
+    <div id="device-tabs"></div>
+    <div id="header-actions">
+      <button id="btn-theme" type="button" title="Switch to light mode" aria-label="Toggle light/dark theme">
+        <svg class="icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button id="btn-reset">Reset view</button>
     </div>
   </header>
 
-  <div class="workspace">
-    <aside class="left-panel">
-      <div>
-        <div class="section-label">ORGANELLES</div>
-        <div id="org-list" class="org-list"></div>
+  <nav id="left-panel">
+    <div class="panel-section" style="flex:0 0 auto;"><div class="panel-title">Organelles</div></div>
+    <ul id="layer-list"></ul>
+    <div class="panel-section">
+      <div class="panel-title">Cell data</div>
+      <div id="spec-sheet"></div>
+    </div>
+  </nav>
+
+  <div id="viewport">
+    <div class="vp-overlay" id="vp-topleft">
+      <div class="device-name" id="vp-device-name">—</div>
+      <div id="vp-device-sub">exploded-view inspector</div>
+    </div>
+    <div class="vp-overlay" id="view-presets">
+      <button data-view="iso">Iso</button>
+      <button data-view="top">Top</button>
+      <button data-view="front">Front</button>
+    </div>
+    <div class="vp-overlay" id="decon-wrap">
+      <label for="decon-slider">Deconstruct</label>
+      <input type="range" id="decon-slider" min="0" max="100" value="0" step="1" />
+      <span id="decon-value">0%</span>
+      <div class="decon-chips">
+        <button data-val="0">0</button><button data-val="50">50</button><button data-val="100">100</button>
       </div>
-
-      <div class="cell-data-box">
-        <div class="section-label" style="margin-bottom: 6px;">CELL DATA</div>
-        <div class="data-row"><span class="data-k">Organelles</span><span class="data-v" id="meta-count">9</span></div>
-        <div class="data-row"><span class="data-k">Size</span><span class="data-v" id="meta-size">~10 – 100 µm</span></div>
-        <div class="data-row"><span class="data-k">Shape</span><span class="data-v" id="meta-shape">Rigid rectangular (cellulose wall)</span></div>
-        <div class="data-row"><span class="data-k">Special</span><span class="data-v" id="meta-special">Chloroplasts · central vacuole</span></div>
-      </div>
-    </aside>
-
-    <main class="center-stage">
-      <div class="stage-top">
-        <div>
-          <div id="stage-title" class="stage-title">Plant Cell</div>
-          <div class="stage-sub">exploded view inspector</div>
-        </div>
-        <div class="cam-pills">
-          <button class="cam-btn active" data-cam="iso">Iso</button>
-          <button class="cam-btn" data-cam="top">Top</button>
-          <button class="cam-btn" data-cam="front">Front</button>
-        </div>
-      </div>
-
-      <div id="canvas-wrap"></div>
-
-      <div class="stage-bottom">
-        <div class="deconstruct-box">
-          <span class="deconstruct-label">DECONSTRUCT</span>
-          <input id="deconstruct-slider" type="range" min="0" max="100" value="0" />
-          <div class="ticks">
-            <span id="deconstruct-val">0%</span>
-            <span>50</span>
-            <span>100</span>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <aside class="right-panel">
-      <div id="detail-count" class="badge-count">9 ORGANELLES</div>
-      <div id="detail-title" class="detail-heading">Plant Cell</div>
-      <p id="detail-desc" class="detail-lead">
-        A plant cell, gently torn open to reveal organelles that photosynthesize, store water, and build the plant body.
-      </p>
-      <p id="detail-tip" class="detail-note">
-        Hover or click an organelle in the viewport, or click a row in the organelle list, to inspect its role. Drag the deconstruct slider to pull the cell apart.
-      </p>
-    </aside>
+    </div>
   </div>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-      }
-    }
-  </script>
+  <aside id="right-panel">
+    <div id="inspector-eyebrow"></div>
+    <div id="inspector-name">—</div>
+    <div id="inspector-material" style="display:none;"></div>
+    <div id="inspector-desc"></div>
+    <div id="inspector-hint"></div>
+  </aside>
+</div>
+<div id="hover-tip"></div>
 
-  <script type="module">
-    import * as THREE from 'three';
-    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.157.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.157.0/examples/jsm/"
+} }
+</script>
 
-    const CELL_DATA = {
-      plant: {
-        title: 'Plant Cell',
-        count: '9 ORGANELLES',
-        metaCount: '9',
-        size: '~10 – 100 µm',
-        shape: 'Rigid rectangular (cellulose wall)',
-        special: 'Chloroplasts · central vacuole',
-        desc: 'A plant cell, gently torn open to reveal organelles that photosynthesize, store water, and build the plant body.',
-        organelles: [
-          { id: 'wall', num: '01', name: 'Cell wall', sub: 'Cellulose microfibrils', color: 0x94a3b8, pos: [-1.75, 0.22, -1.1], scale: [0.45, 0.16, 0.65], explode: [-2.4, 1.3, -1.7], info: 'ผนังเซลล์แข็งแรงช่วยคงรูปทรงและป้องกันเซลล์พืช' },
-          { id: 'mem', num: '02', name: 'Plasma membrane', sub: 'Phospholipid bilayer', color: 0x38bdf8, pos: [1.65, 0.22, 0.2], scale: [0.42, 0.16, 0.58], explode: [2.3, 1.4, 0.4], info: 'เยื่อหุ้มเซลล์ควบคุมการผ่านเข้า-ออกของสาร' },
-          { id: 'vac', num: '03', name: 'Central vacuole', sub: 'Aqueous solution · tonoplast', color: 0x93c5fd, pos: [-0.2, 0.16, 0.15], scale: [1.3, 0.12, 1.3], explode: [-0.3, 1.1, 0.2], info: 'แวคิวโอลขนาดใหญ่เก็บน้ำและรักษาความเต่งของเซลล์' },
-          { id: 'nuc', num: '04', name: 'Nucleus', sub: 'Nuclear envelope · chromatin', color: 0x8b5cf6, pos: [-1.45, 0.22, -0.25], scale: [0.85, 0.26, 0.92], explode: [-2.1, 1.5, -0.5], info: 'นิวเคลียสเก็บสารพันธุกรรมและควบคุมการทำงานของเซลล์' },
-          { id: 'chl', num: '05', name: 'Chloroplasts', sub: 'Thylakoid membranes · chlorophyll', color: 0x22c55e, pos: [0.45, 0.2, 0.1], scale: [0.55, 0.18, 0.92], explode: [0.8, 1.7, 0.2], info: 'คลอโรพลาสต์สังเคราะห์ด้วยแสงสร้างพลังงานให้พืช' },
-          { id: 'mit', num: '06', name: 'Mitochondria', sub: 'Double membrane · cristae', color: 0xea580c, pos: [0.55, 0.2, -1.25], scale: [0.42, 0.18, 0.72], explode: [1.0, 1.8, -1.9], info: 'ไมโทคอนเดรียสร้างพลังงาน ATP ให้เซลล์' },
-          { id: 'rer', num: '07', name: 'Rough ER', sub: 'Membrane cisternae · ribosomes', color: 0x6366f1, pos: [-1.15, 0.2, 1.15], scale: [0.62, 0.18, 0.9], explode: [-1.8, 1.5, 1.8], info: 'เอนโดพลาสมิกเรติคูลัมแบบขรุขระช่วยสร้างโปรตีน' },
-          { id: 'gol', num: '08', name: 'Golgi apparatus', sub: 'Flattened cisternae', color: 0xf472b6, pos: [1.55, 0.2, -1.15], scale: [0.58, 0.2, 0.62], explode: [2.2, 1.6, -1.8], info: 'กอลจิบอดีคัดแยกและบรรจุสารส่งออก' },
-          { id: 'rib', num: '09', name: 'Ribosomes', sub: 'rRNA + proteins', color: 0xfacc15, pos: [0.75, 0.2, 1.55], scale: [0.42, 0.18, 0.68], explode: [1.3, 1.6, 2.1], info: 'ไรโบโซมทำหน้าที่สังเคราะห์โปรตีน' }
-        ]
-      },
-      animal: {
-        title: 'Animal Cell',
-        count: '7 ORGANELLES',
-        metaCount: '7',
-        size: '~10 – 30 µm',
-        shape: 'Flexible rounded / isometric',
-        special: 'Centrioles · lysosomes',
-        desc: 'An animal cell opened to inspect organelles responsible for energy production, transport, digestion, and cell division.',
-        organelles: [
-          { id: 'mem', num: '01', name: 'Plasma membrane', sub: 'Phospholipid bilayer', color: 0x38bdf8, pos: [-1.65, 0.22, -0.95], scale: [0.45, 0.16, 0.62], explode: [-2.2, 1.4, -1.5], info: 'เยื่อหุ้มเซลล์ควบคุมการลำเลียงสารเข้าออก' },
-          { id: 'nuc', num: '02', name: 'Nucleus', sub: 'Nuclear envelope · chromatin', color: 0x8b5cf6, pos: [0, 0.24, 0], scale: [0.95, 0.28, 0.95], explode: [0, 1.8, 0], info: 'นิวเคลียสศูนย์กลางควบคุมกิจกรรมของเซลล์' },
-          { id: 'mit', num: '03', name: 'Mitochondria', sub: 'Double membrane · cristae', color: 0xea580c, pos: [-1.35, 0.2, 0.75], scale: [0.48, 0.18, 0.85], explode: [-2.0, 1.5, 1.3], info: 'ไมโทคอนเดรียแหล่งสร้างพลังงานของเซลล์' },
-          { id: 'cen', num: '04', name: 'Centrioles', sub: 'Microtubule triplets', color: 0x22c55e, pos: [1.25, 0.2, 0.95], scale: [0.45, 0.18, 0.72], explode: [1.8, 1.6, 1.6], info: 'เซนทริโอลช่วยจัดระเบียบเส้นใยขณะแบ่งเซลล์' },
-          { id: 'lys', num: '05', name: 'Lysosomes', sub: 'Hydrolytic enzymes', color: 0xf59e0b, pos: [-1.15, 0.2, -1.05], scale: [0.48, 0.2, 0.48], explode: [-1.7, 1.5, -1.6], info: 'ไลโซโซมย่อยสลายสิ่งแปลกปลอมและของเสีย' },
-          { id: 'gol', num: '06', name: 'Golgi apparatus', sub: 'Flattened cisternae', color: 0xf472b6, pos: [1.35, 0.2, -0.75], scale: [0.55, 0.2, 0.78], explode: [2.0, 1.5, -1.3], info: 'กอลจิบอดีคัดแยกและบรรจุสาร' },
-          { id: 'rib', num: '07', name: 'Ribosomes', sub: 'rRNA + proteins', color: 0xfacc15, pos: [0.1, 0.2, 1.45], scale: [0.55, 0.18, 0.48], explode: [0.2, 1.6, 2.1], info: 'ไรโบโซมสังเคราะห์โปรตีนภายในเซลล์' }
-        ]
-      }
-    };
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-    const container = document.getElementById('canvas-wrap');
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#e7e9ec');
+const $ = id => document.getElementById(id);
+const viewport = $('viewport'), deconSlider = $('decon-slider'), deconValue = $('decon-value');
+const layerListEl = $('layer-list'), specSheetEl = $('spec-sheet'), deviceTabsEl = $('device-tabs');
+const vpDeviceName = $('vp-device-name'), vpDeviceSub = $('vp-device-sub'), hoverTip = $('hover-tip');
+const inspEyebrow = $('inspector-eyebrow'), inspName = $('inspector-name'), inspMaterial = $('inspector-material');
+const inspDesc = $('inspector-desc'), inspHint = $('inspector-hint'), btnTheme = $('btn-theme');
 
-    const camera = new THREE.PerspectiveCamera(34, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(0, 11.2, 6.2);
+const THEME_KEY = 'cell-anatomy-theme';
+let themeKey = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
-
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.target.set(0, 0, 0);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 1.65));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-    dirLight.position.set(3, 15, 5);
-    dirLight.castShadow = true;
-    scene.add(dirLight);
-
-    const cellGroup = new THREE.Group();
-    scene.add(cellGroup);
-
-    let currentMode = 'plant';
-    let partMeshes = [];
-    let autoSpin = false;
-
-    function createHexShape(radius) {
-      const shape = new THREE.Shape();
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
-        const x = Math.cos(a) * radius;
-        const y = Math.sin(a) * radius;
-        if (i === 0) shape.moveTo(x, y);
-        else shape.lineTo(x, y);
-      }
-      shape.closePath();
-      return shape;
-    }
-
-    function selectOrganelle(item) {
-      document.querySelectorAll('.org-item').forEach((el) => {
-        el.classList.toggle('active', el.dataset.id === item.id);
-      });
-      document.getElementById('detail-count').textContent = `${item.num} · ${item.name.toUpperCase()}`;
-      document.getElementById('detail-title').textContent = item.name;
-      document.getElementById('detail-desc').textContent = `${item.sub} — ${item.info}`;
-    }
-
-    function renderSidebar(mode) {
-      const data = CELL_DATA[mode];
-      document.getElementById('stage-title').textContent = data.title;
-      document.getElementById('detail-count').textContent = data.count;
-      document.getElementById('detail-title').textContent = data.title;
-      document.getElementById('detail-desc').textContent = data.desc;
-
-      document.getElementById('meta-count').textContent = data.metaCount;
-      document.getElementById('meta-size').textContent = data.size;
-      document.getElementById('meta-shape').textContent = data.shape;
-      document.getElementById('meta-special').textContent = data.special;
-
-      const listEl = document.getElementById('org-list');
-      listEl.innerHTML = '';
-      data.organelles.forEach((item) => {
-        const row = document.createElement('div');
-        row.className = 'org-item';
-        row.dataset.id = item.id;
-        row.innerHTML = `
-          <span class="org-num">${item.num}</span>
-          <div>
-            <div class="org-item-name">${item.name}</div>
-            <div class="org-item-sub">${item.sub}</div>
-          </div>
-        `;
-        row.addEventListener('click', () => selectOrganelle(item));
-        listEl.appendChild(row);
-      });
-    }
-
-    function buildCell(mode) {
-      currentMode = mode;
-      while (cellGroup.children.length > 0) {
-        cellGroup.remove(cellGroup.children[0]);
-      }
-      partMeshes = [];
-
-      const isPlant = mode === 'plant';
-      const outerGeo = new THREE.ExtrudeGeometry(createHexShape(3.15), {
-        depth: 0.24, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.08, bevelThickness: 0.06
-      });
-      outerGeo.rotateX(Math.PI / 2);
-      const outerMesh = new THREE.Mesh(
-        outerGeo,
-        new THREE.MeshStandardMaterial({ color: isPlant ? 0xdbe7e4 : 0xf3e8d2, roughness: 0.75 })
-      );
-      outerMesh.position.y = -0.05;
-      outerMesh.receiveShadow = true;
-      cellGroup.add(outerMesh);
-
-      const innerGeo = new THREE.ExtrudeGeometry(createHexShape(2.78), { depth: 0.12, bevelEnabled: false });
-      innerGeo.rotateX(Math.PI / 2);
-      const innerMesh = new THREE.Mesh(
-        innerGeo,
-        new THREE.MeshStandardMaterial({ color: isPlant ? 0xb7dcd8 : 0xe8f1f5, roughness: 0.6 })
-      );
-      innerMesh.position.y = 0.04;
-      innerMesh.receiveShadow = true;
-      cellGroup.add(innerMesh);
-
-      const ovalGeo = new THREE.SphereGeometry(0.62, 28, 20);
-      CELL_DATA[mode].organelles.forEach((item) => {
-        const mesh = new THREE.Mesh(
-          ovalGeo,
-          new THREE.MeshStandardMaterial({ color: item.color, roughness: 0.42 })
-        );
-        mesh.position.set(...item.pos);
-        mesh.scale.set(...item.scale);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        mesh.userData = {
-          ...item,
-          basePos: new THREE.Vector3(...item.pos),
-          explodePos: new THREE.Vector3(...item.explode)
-        };
-        cellGroup.add(mesh);
-        partMeshes.push(mesh);
-      });
-
-      renderSidebar(mode);
-      applyDeconstruct(Number(slider.value));
-    }
-
-    const slider = document.getElementById('deconstruct-slider');
-    const pctLabel = document.getElementById('deconstruct-val');
-    function applyDeconstruct(val) {
-      const t = val / 100;
-      pctLabel.textContent = `${val}%`;
-      partMeshes.forEach((m) => {
-        m.position.lerpVectors(m.userData.basePos, m.userData.explodePos, t);
-      });
-    }
-    slider.addEventListener('input', (e) => applyDeconstruct(Number(e.target.value)));
-
-    document.getElementById('btn-plant').addEventListener('click', (e) => {
-      e.target.classList.add('active');
-      document.getElementById('btn-animal').classList.remove('active');
-      buildCell('plant');
-    });
-    document.getElementById('btn-animal').addEventListener('click', (e) => {
-      e.target.classList.add('active');
-      document.getElementById('btn-plant').classList.remove('active');
-      buildCell('animal');
-    });
-
-    document.querySelectorAll('.cam-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.cam-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        const mode = btn.dataset.cam;
-        if (mode === 'top') camera.position.set(0, 12.5, 0.01);
-        else if (mode === 'front') camera.position.set(0, 3.2, 11.5);
-        else camera.position.set(0, 11.2, 6.2);
-      });
-    });
-
-    document.getElementById('btn-spin').addEventListener('click', (e) => {
-      autoSpin = !autoSpin;
-      e.target.style.background = autoSpin ? '#dbeafe' : '';
-    });
-
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      autoSpin = false;
-      slider.value = 0;
-      applyDeconstruct(0);
-      camera.position.set(0, 11.2, 6.2);
-      controls.target.set(0, 0, 0);
-      renderSidebar(currentMode);
-    });
-
-    const raycaster = new THREE.Raycaster();
-    const pointer = new THREE.Vector2();
-    renderer.domElement.addEventListener('click', (e) => {
-      const rect = renderer.domElement.getBoundingClientRect();
-      pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-      raycaster.setFromCamera(pointer, camera);
-      const hits = raycaster.intersectObjects(partMeshes);
-      if (hits.length > 0) {
-        selectOrganelle(hits[0].object.userData);
-      }
-    });
-
-    buildCell('plant');
-
-    window.addEventListener('resize', () => {
-      camera.aspect = container.clientWidth / container.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(container.clientWidth, container.clientHeight);
-    });
-
-    function animate() {
-      requestAnimationFrame(animate);
-      if (autoSpin) cellGroup.rotation.y += 0.004;
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-  </script>
-</body>
-</html>
+const SCENE_THEME = {
+  dark: { bg:0x0c1119, fogNear:14, fogFar:38, gridCenter:0x2a3448, gridLines:0x1a2334, pad:0x10141e, exposure:1.15,
+    ambient:{color:0x8fa3c8,intensity:0.55}, hemi:{sky:0xaecbe8,ground:0x1a1a1f,intensity:0.6},
+    key:{color:0xfff3e2,intensity:1.9}, rim:{color:0x5fa8ff,intensity:0.5}, fill:{color:0xdd9553,intensity:0.25},
+    hoverHex:0x5fe1cd, hoverIntensity:0.35, selectHex:0xdd9553, selectIntensity:0.55 },
+  light: { bg:0xf0f4fa, fogNear:18, fogFar:48, gridCenter:0xb6c2d4, gridLines:0xdbe2ed, pad:0xe4eaf3, exposure:1.0,
+    ambient:{color:0xffffff,intensity:0.85}, hemi:{sky:0xffffff,ground:0xd3dbe6,intensity:0.95},
+    key:{color:0xffffff,intensity:2.1}, 
